@@ -6,6 +6,7 @@ import RecordList from "./components/RecordList";
 import { CSVLink } from "react-csv";
 const firebase = require('firebase');
 
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -15,7 +16,8 @@ class App extends React.Component {
     this.state = {
       startTime: [],
       endTime: [],
-      currentTime: `${year}${month}`
+      currentTime: `${year}${month}`,
+      test: ''
     }
   }
 
@@ -32,7 +34,6 @@ class App extends React.Component {
           time: data.time
         }
       });
-      console.log(docData);
       this.setState(() => ({ startTime: docData }));
     });
 
@@ -48,9 +49,86 @@ class App extends React.Component {
           time: data.time
         }
       });
-      console.log(docData);
       this.setState(() => ({ endTime: docData }));
     });
+  }
+
+  convertTimeString = time => {
+    if (time < 10) {
+      return "0" + time.toString();
+    }
+    return time.toString();
+  };
+
+  getNewRecord = () => {
+    const currentDate = new Date()
+    const month = this.convertTimeString(currentDate.getMonth() + 1);
+    const date = this.convertTimeString(currentDate.getDate());
+    const hour = this.convertTimeString(currentDate.getHours());
+    const min = this.convertTimeString(currentDate.getMinutes());
+    const sec = this.convertTimeString(currentDate.getSeconds());
+    const timeString = `${hour}:${min}:${sec}`;
+    return {
+      month,
+      date,
+      time: timeString
+    }
+  }
+
+  onStart = () => {
+    const newRec = this.getNewRecord();
+    const docData = firebase.firestore()
+      .collection('start_time')
+      .where('month', '==', newRec.month)
+      .where('date', '==', newRec.date)
+      .get()
+      .then(res => {
+        // docs found, update
+        if (res.docs.length > 0) {
+          res.docs.map(_doc => {
+            const id = _doc.id;
+            const content = _doc.data();
+            console.log('update start...', { id, newRec });
+            firebase.firestore().collection('start_time').doc(id).update({
+              month: newRec.month,
+              date: newRec.date,
+              time: newRec.time
+            });
+          });
+        } else {
+          // no docs found, add
+          console.log('no record found, add');
+          firebase.firestore().collection('start_time').add(newRec);
+        }
+      });
+  }
+
+  onLeave = () => {
+    const newRec = this.getNewRecord();
+    const docData = firebase.firestore()
+      .collection('end_time')
+      .where('month', '==', newRec.month)
+      .where('date', '==', newRec.date)
+      .get()
+      .then(res => {
+        // docs found, update
+        if (res.docs.length > 0) {
+          res.docs.map(_doc => {
+            const id = _doc.id;
+            const content = _doc.data();
+            console.log('update start...', { id, newRec });
+            firebase.firestore().collection('end_time').doc(id).update({
+              month: newRec.month,
+              date: newRec.date,
+              time: newRec.time
+            });
+          });
+        } else {
+          // no docs found, add
+          console.log('no record found, add');
+          firebase.firestore().collection('end_time').add(newRec);
+        }
+      });
   }
 
   render() {
@@ -73,6 +151,7 @@ class App extends React.Component {
     record.sort((a, b) => {
       return a.month >= b.month && a.date > b.date ? -1 : 1;
     });
+
     console.log(record);
 
     const styles = {
@@ -95,6 +174,18 @@ class App extends React.Component {
         <Header />
 
         <div>
+          <a
+            href="javascript:;"
+            style={styles.button}
+            onClick={this.onStart}
+          >Work</a>
+
+          <a
+            href="javascript:;"
+            style={styles.button}
+            onClick={this.onLeave}
+          >Leave</a>
+
           <CSVLink
             data={record}
             separator={` `}
@@ -103,6 +194,7 @@ class App extends React.Component {
             target="_blank"
             style={styles.button}
           >Export CSV</CSVLink>
+
           <a
             href="javascript:;"
             style={styles.button}

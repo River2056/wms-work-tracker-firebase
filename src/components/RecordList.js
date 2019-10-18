@@ -9,7 +9,8 @@ const RecordList = props => {
             key={index}
             style={styles.paragraph}
           >
-            {_rec.month}-{_rec.date} {_rec.startTime} {_rec.endTime}
+            <span style={styles.monthDate}>{_rec.month}-{_rec.date} </span>
+            <span>start: {_rec.startTime} end: {_rec.endTime}</span>
           </p>
         )
       }
@@ -20,7 +21,10 @@ const RecordList = props => {
 const styles = {
   paragraph: {
     margin: '20px 0',
-    fontSize: '20px'
+    fontSize: '1.5rem'
+  },
+  monthDate: {
+    fontWeight: 'bold'
   }
 }
 
