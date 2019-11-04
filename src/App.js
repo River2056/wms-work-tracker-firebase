@@ -131,6 +131,24 @@ class App extends React.Component {
       });
   }
 
+  clearAllRecords = async () => {
+    if (window.confirm(`Are you sure you want to clear all records?`)) {
+      // clear state
+      await this.setState(() => ({ startTime: [], endTime: [] }));
+      // clear DB
+      await firebase.firestore().collection('start_time').get().then(res => {
+        res.docs.forEach(_doc => {
+          firebase.firestore().collection('start_time').doc(_doc.id).delete();
+        });
+      });
+      await firebase.firestore().collection('end_time').get().then(res => {
+        res.docs.forEach(_doc => {
+          firebase.firestore().collection('end_time').doc(_doc.id).delete();
+        });
+      });
+    }
+  }
+
   render() {
     // records
     const record = this.state.startTime.map(_rec => {
@@ -198,6 +216,7 @@ class App extends React.Component {
           <a
             href="javascript:;"
             style={styles.button}
+            onClick={this.clearAllRecords}
           >Clear Records</a>
         </div>
 
